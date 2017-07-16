@@ -164,10 +164,7 @@ func (scan *Scanner) peekNext() rune {
 }
 
 func (scan *Scanner) getStr() {
-	for c := scan.peek(); c != '"'; {
-		if scan.isAtEnd() {
-			break
-		}
+	for scan.peek() != '"' && !scan.isAtEnd() {
 		if scan.peek() == '\n' {
 			scan.line++
 		}

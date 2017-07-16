@@ -35,5 +35,5 @@ func TokenError(tk token.Token, message string) {
 }
 
 func report(line int, where string, message string) {
-	fmt.Printf("[line %d] where: %s: %s", line, where, message)
+	fmt.Printf("[line %d] where: %s: %s\n", line, where, message)
 }
