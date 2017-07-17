@@ -102,11 +102,9 @@ func (scan *Scanner) scanToken() {
 		scan.addToken(common.ConditionalExp(scan.match('='), token.GreaterEqual, token.Greater), nil)
 	case '/':
 		if scan.match('/') {
-			for x := scan.peek(); x != '\n'; {
-				if !scan.isAtEnd() {
-					scan.advance()
-				}
-			}
+			scan.skipLineComment()
+		} else if scan.match('*') {
+			scan.skipBlockComment()
 		} else {
 			scan.addToken(token.Slash, nil)
 		}
@@ -161,6 +159,44 @@ func (scan *Scanner) peekNext() rune {
 		return '\000'
 	}
 	return scan.runes[scan.current+1]
+}
+
+func (scan *Scanner) skipLineComment() {
+	for scan.peek() != '\n' && !scan.isAtEnd() {
+		scan.advance()
+	}
+}
+
+// skipBlockComment 跳过块注释
+// https://github.com/munificent/wren/blob/master/src/vm/wren_compiler.c#L660
+func (scan *Scanner) skipBlockComment() {
+	var nesting = 1
+	for nesting > 0 {
+		if scan.isAtEnd() {
+			lox.LineError(scan.line, "Unterminated block comment!")
+			return
+		}
+
+		if scan.peek() == '\n' {
+			scan.line++
+		}
+
+		if scan.peek() == '/' && scan.peekNext() == '*' {
+			scan.advance()
+			scan.advance()
+			nesting++
+			continue
+		}
+
+		if scan.peek() == '*' && scan.peekNext() == '/' {
+			scan.advance()
+			scan.advance()
+			nesting--
+			continue
+		}
+
+		scan.advance()
+	}
 }
 
 func (scan *Scanner) getStr() {
