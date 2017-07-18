@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"strings"
 
 	"github.com/zhiruchen/lox-go/expr"
@@ -60,7 +59,7 @@ func main() {
 			expr.NewLiteral(123),
 		),
 		expr.NewGrouping(expr.NewLiteral(45.67)),
-		&token.Token{},
+		&token.Token{token.Star, "*", nil, 1},
 	)
 
 	ast := &AstPrinter{}
