@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/zhiruchen/lox-go/interpreter"
+	"github.com/zhiruchen/lox-go/parser"
 	"github.com/zhiruchen/lox-go/scanner"
 )
 
@@ -25,9 +27,13 @@ func runPromt() {
 func run(source string) {
 	s := scanner.NewScanner(source)
 	tokens := s.ScanTokens()
-	for _, tk := range tokens {
-		fmt.Println(tk.ToString())
-	}
+	// for _, tk := range tokens {
+	// 	fmt.Println(tk.ToString())
+	// }
+	p := parser.NewParser(tokens)
+
+	itp := &interpreter.Interpreter{}
+	itp.Interprete(p.Parse())
 }
 
 func main() {
