@@ -11,28 +11,29 @@ import (
 	"github.com/zhiruchen/lox-go/scanner"
 )
 
-func runPromt() {
+func runPrompt() {
 
 	reader := bufio.NewReader(os.Stdin)
+	itp := interpreter.NewInterpreter()
+
 	for {
 		fmt.Print("code > ")
 		source, err := reader.ReadString('\n')
 		if err != nil {
 			log.Fatalln(err)
 		}
-		run(source)
+
+		run(itp, source)
 	}
 }
 
-func run(source string) {
+func run(itp *interpreter.Interpreter, source string) {
 	s := scanner.NewScanner(source)
 	tokens := s.ScanTokens()
 	p := parser.NewParser(tokens)
-
-	itp := &interpreter.Interpreter{}
 	itp.Interpret(p.Parse())
 }
 
 func main() {
-	runPromt()
+	runPrompt()
 }

@@ -13,6 +13,12 @@ type Parser struct {
 }
 
 func NewParser(tokens []*token.Token) *Parser {
+	//fmt.Printf("tokens: %v\n", tokens)
+	//for _, t := range tokens {
+	//	fmt.Printf("token name: %s\n", t.Lexeme)
+	//	fmt.Printf("token Literal: %v\n", t.Literal)
+	//	fmt.Printf("token type: %v\n", t.TokenType)
+	//}
 	return &Parser{tokens: tokens}
 }
 
@@ -20,10 +26,30 @@ func (p *Parser) Parse() []expr.Stmt {
 
 	statements := make([]expr.Stmt, 0)
 	for !p.isAtEnd() {
-		statements = append(statements, p.statement())
+		statements = append(statements, p.declaration())
 	}
 
 	return statements
+}
+
+func (p *Parser) declaration() expr.Stmt {
+	if p.match(token.Var) {
+		return p.varDeclaration()
+	}
+
+	return p.statement()
+}
+
+func (p *Parser) varDeclaration() expr.Stmt {
+	name := p.consume(token.Identifier, "Expect variable name.")
+
+	var initializer expr.Expr
+	if p.match(token.Equal) {
+		initializer = p.expression()
+	}
+
+	p.consume(token.Semicolon, `Expect ';' after variable declaration.`)
+	return expr.NewVarStmt(name, initializer)
 }
 
 func (p *Parser) statement() expr.Stmt {
@@ -121,6 +147,10 @@ func (p *Parser) primary() expr.Expr {
 
 	if p.match(token.Number, token.String) {
 		return expr.NewLiteral(p.previous().Literal)
+	}
+
+	if p.match(token.Identifier) {
+		return expr.NewVariable(p.previous())
 	}
 
 	if p.match(token.LeftParen) {

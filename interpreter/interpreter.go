@@ -6,11 +6,18 @@ import (
 	"strings"
 
 	"github.com/zhiruchen/lox-go/expr"
+	"github.com/zhiruchen/lox-go/lox"
 	"github.com/zhiruchen/lox-go/token"
 )
 
 // Interpreter the lox lang interpreter
-type Interpreter struct{}
+type Interpreter struct {
+	env *lox.Env
+}
+
+func NewInterpreter() *Interpreter {
+	return &Interpreter{env: lox.NewEnv()}
+}
 
 // Interpret 运行解释器
 func (itp *Interpreter) Interpret(statements []expr.Stmt) {
@@ -92,6 +99,10 @@ func (itp *Interpreter) VisitorUnaryExpr(exp *expr.Unary) interface{} {
 	return nil
 }
 
+func (itp *Interpreter) VisitorVariableExpr(exp *expr.Variable) interface{} {
+	return itp.env.Get(exp.Name)
+}
+
 func (itp *Interpreter) VisitorExpressionStmtExpr(expr *expr.Expression) interface{} {
 	itp.evaluate(expr.Expression)
 	return nil
@@ -100,6 +111,17 @@ func (itp *Interpreter) VisitorExpressionStmtExpr(expr *expr.Expression) interfa
 func (itp *Interpreter) VisitorPrintStmtExpr(expr *expr.Print) interface{} {
 	value := itp.evaluate(expr.Print)
 	fmt.Printf("%s\n", itp.stringify(value))
+	return nil
+}
+
+func (itp *Interpreter) VisitorVarStmtExpr(expr *expr.Var) interface{} {
+	var value interface{}
+
+	if expr.Initializer != nil {
+		value = itp.evaluate(expr.Initializer)
+	}
+
+	itp.env.Define(expr.Name.Lexeme, value)
 	return nil
 }
 
