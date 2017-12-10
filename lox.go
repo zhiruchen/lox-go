@@ -27,13 +27,10 @@ func runPromt() {
 func run(source string) {
 	s := scanner.NewScanner(source)
 	tokens := s.ScanTokens()
-	// for _, tk := range tokens {
-	// 	fmt.Println(tk.ToString())
-	// }
 	p := parser.NewParser(tokens)
 
 	itp := &interpreter.Interpreter{}
-	itp.Interprete(p.Parse())
+	itp.Interpret(p.Parse())
 }
 
 func main() {

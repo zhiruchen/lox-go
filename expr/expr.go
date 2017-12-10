@@ -9,9 +9,19 @@ type Visitor interface {
 	VisitorGroupingExpr(expr *Grouping) interface{}
 	VisitorLiteralExpr(expr *Literal) interface{}
 	VisitorUnaryExpr(expr *Unary) interface{}
+	StmtVisitor
+}
+
+type StmtVisitor interface {
+	VisitorExpressionStmtExpr(expr *Expression) interface{}
+	VisitorPrintStmtExpr(expr *Print) interface{}
 }
 
 type Expr interface {
+	Accept(v Visitor) interface{}
+}
+
+type Stmt interface {
 	Accept(v Visitor) interface{}
 }
 
@@ -64,4 +74,28 @@ func NewUnary(operator *token.Token, right Expr) *Unary {
 
 func (u *Unary) Accept(v Visitor) interface{} {
 	return v.VisitorUnaryExpr(u)
+}
+
+type Expression struct {
+	Expression Expr
+}
+
+type Print struct {
+	Print Expr
+}
+
+func (st *Expression) Accept(v Visitor) interface{} {
+	return v.VisitorExpressionStmtExpr(st)
+}
+
+func (st *Print) Accept(v Visitor) interface{} {
+	return v.VisitorPrintStmtExpr(st)
+}
+
+func NewPrintStmt(e Expr) *Print {
+	return &Print{Print: e}
+}
+
+func NewExpressionStmt(e Expr) *Expression {
+	return &Expression{Expression: e}
 }

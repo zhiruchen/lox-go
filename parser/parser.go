@@ -16,8 +16,34 @@ func NewParser(tokens []*token.Token) *Parser {
 	return &Parser{tokens: tokens}
 }
 
-func (p *Parser) Parse() expr.Expr {
-	return p.expression()
+func (p *Parser) Parse() []expr.Stmt {
+
+	statements := make([]expr.Stmt, 0)
+	for !p.isAtEnd() {
+		statements = append(statements, p.statement())
+	}
+
+	return statements
+}
+
+func (p *Parser) statement() expr.Stmt {
+	if p.match(token.Print) {
+		return p.printStatement()
+	}
+
+	return p.expressionStatement()
+}
+
+func (p *Parser) printStatement() *expr.Print {
+	value := p.expression()
+	p.consume(token.Semicolon, `Expect ":" after value.`)
+	return expr.NewPrintStmt(value)
+}
+
+func (p *Parser) expressionStatement() *expr.Expression {
+	value := p.expression()
+	p.consume(token.Semicolon, `Expect ":" after value.`)
+	return expr.NewExpressionStmt(value)
 }
 
 func (p *Parser) expression() expr.Expr {

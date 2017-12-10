@@ -12,9 +12,17 @@ import (
 // Interpreter the lox lang interpreter
 type Interpreter struct{}
 
-// Interprete 运行解释器
-func (itp *Interpreter) Interprete(exp expr.Expr) {
-	fmt.Println(itp.stringify(itp.evaluate(exp)))
+// Interpret 运行解释器
+func (itp *Interpreter) Interpret(statements []expr.Stmt) {
+	//fmt.Println(itp.stringify(itp.evaluate(exp)))
+
+	for _, statement := range statements {
+		itp.execute(statement)
+	}
+}
+
+func (itp *Interpreter) execute(stmt expr.Stmt) {
+	stmt.Accept(itp)
 }
 
 func (itp *Interpreter) VisitorBinaryExpr(exp *expr.Binary) interface{} {
@@ -81,6 +89,17 @@ func (itp *Interpreter) VisitorUnaryExpr(exp *expr.Unary) interface{} {
 		v := itp.checkNumberOperand(*exp.Operator, right)
 		return 0 - v
 	}
+	return nil
+}
+
+func (itp *Interpreter) VisitorExpressionStmtExpr(expr *expr.Expression) interface{} {
+	itp.evaluate(expr.Expression)
+	return nil
+}
+
+func (itp *Interpreter) VisitorPrintStmtExpr(expr *expr.Print) interface{} {
+	value := itp.evaluate(expr.Print)
+	fmt.Printf("%s\n", itp.stringify(value))
 	return nil
 }
 
