@@ -125,6 +125,13 @@ func (itp *Interpreter) VisitorVarStmtExpr(expr *expr.Var) interface{} {
 	return nil
 }
 
+func (itp *Interpreter) VisitorAssignExpr(expr *expr.Assign) interface{} {
+	value := itp.evaluate(expr.Value)
+
+	itp.env.Assign(expr.Name, value)
+	return value
+}
+
 func (itp *Interpreter) checkNumberOperand(operator token.Token, obj interface{}) float64 {
 	v, ok := obj.(float64)
 	if !ok {

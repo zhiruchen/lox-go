@@ -1,8 +1,6 @@
 package lox
 
 import (
-	"fmt"
-
 	"github.com/zhiruchen/lox-go/token"
 )
 
@@ -27,4 +25,13 @@ func (env *Env) Get(name *token.Token) interface{} {
 	}
 
 	panic("Undefined variable '" + name.Lexeme + "'.")
+}
+
+func (env *Env) Assign(name *token.Token, value interface{}) {
+	if _, ok := env.values[name.Lexeme]; ok {
+		env.values[name.Lexeme] = value
+		return
+	}
+
+	panic("Undefined variable" + name.Lexeme + ".")
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zhiruchen/lox-go/expr"
+	"github.com/zhiruchen/lox-go/lox"
 	"github.com/zhiruchen/lox-go/token"
 )
 
@@ -13,12 +14,6 @@ type Parser struct {
 }
 
 func NewParser(tokens []*token.Token) *Parser {
-	//fmt.Printf("tokens: %v\n", tokens)
-	//for _, t := range tokens {
-	//	fmt.Printf("token name: %s\n", t.Lexeme)
-	//	fmt.Printf("token Literal: %v\n", t.Literal)
-	//	fmt.Printf("token type: %v\n", t.TokenType)
-	//}
 	return &Parser{tokens: tokens}
 }
 
@@ -73,7 +68,26 @@ func (p *Parser) expressionStatement() *expr.Expression {
 }
 
 func (p *Parser) expression() expr.Expr {
-	return p.equality()
+	//return p.equality()
+	return p.assignment()
+}
+
+func (p *Parser) assignment() expr.Expr {
+	exp := p.equality()
+
+	if p.match(token.Equal) {
+		equals := p.previous()
+		value := p.assignment()
+
+		if v, ok := exp.(*expr.Variable); ok {
+			name := v.Name
+			return expr.NewAssign(name, value)
+		}
+
+		lox.TokenError(equals, "Invalid Assignment target.")
+	}
+
+	return exp
 }
 
 func (p *Parser) equality() expr.Expr {
@@ -202,4 +216,8 @@ func (p *Parser) isAtEnd() bool {
 
 func (p *Parser) previous() *token.Token {
 	return p.tokens[p.current-1]
+}
+
+func (p *Parser) error() {
+
 }

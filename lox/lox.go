@@ -26,7 +26,7 @@ func LineError(line int, message string) {
 }
 
 // TokenError lox token error
-func TokenError(tk token.Token, message string) {
+func TokenError(tk *token.Token, message string) {
 	if tk.TokenType == token.Eof {
 		report(tk.Line, " is at end", message)
 	} else {
