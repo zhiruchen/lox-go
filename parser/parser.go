@@ -52,6 +52,10 @@ func (p *Parser) statement() expr.Stmt {
 		return p.printStatement()
 	}
 
+	if p.match(token.LeftBrace) {
+		return expr.NewBlockStmt(p.block())
+	}
+
 	return p.expressionStatement()
 }
 
@@ -65,6 +69,17 @@ func (p *Parser) expressionStatement() *expr.Expression {
 	value := p.expression()
 	p.consume(token.Semicolon, `Expect ":" after value.`)
 	return expr.NewExpressionStmt(value)
+}
+
+func (p *Parser) block() []expr.Stmt {
+	statements := make([]expr.Stmt, 0)
+
+	for !p.check(token.RightBrace) && !p.isAtEnd() {
+		statements = append(statements, p.declaration())
+	}
+
+	p.consume(token.RightBrace, `Expect "}" after block!`)
+	return statements
 }
 
 func (p *Parser) expression() expr.Expr {

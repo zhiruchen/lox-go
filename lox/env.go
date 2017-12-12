@@ -5,12 +5,21 @@ import (
 )
 
 type Env struct {
-	values map[string]interface{}
+	Enclosing *Env
+	values    map[string]interface{}
 }
 
 func NewEnv() *Env {
 	return &Env{
 		values: make(map[string]interface{}),
+	}
+}
+
+// NewEnvWithEnclosing  new env with enclosing
+func NewEnvWithEnclosing(enclosing *Env) *Env {
+	return &Env{
+		Enclosing: enclosing,
+		values:    make(map[string]interface{}),
 	}
 }
 
@@ -24,12 +33,21 @@ func (env *Env) Get(name *token.Token) interface{} {
 		return v
 	}
 
+	if env.Enclosing != nil {
+		return env.Enclosing.Get(name)
+	}
+
 	panic("Undefined variable '" + name.Lexeme + "'.")
 }
 
 func (env *Env) Assign(name *token.Token, value interface{}) {
 	if _, ok := env.values[name.Lexeme]; ok {
 		env.values[name.Lexeme] = value
+		return
+	}
+
+	if env.Enclosing != nil {
+		env.Enclosing.Assign(name, value)
 		return
 	}
 

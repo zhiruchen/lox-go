@@ -32,6 +32,23 @@ func (itp *Interpreter) execute(stmt expr.Stmt) {
 	stmt.Accept(itp)
 }
 
+func (itp *Interpreter) VisitorBlockStmtExpr(expr *expr.Block) interface{} {
+	itp.executeBlock(expr.Statements, lox.NewEnvWithEnclosing(itp.env))
+	return nil
+}
+
+func (itp *Interpreter) executeBlock(statements []expr.Stmt, env *lox.Env) {
+	previous := itp.env
+	defer func() {
+		itp.env = previous
+	}()
+
+	itp.env = env
+	for _, s := range statements {
+		itp.execute(s)
+	}
+}
+
 func (itp *Interpreter) VisitorBinaryExpr(exp *expr.Binary) interface{} {
 	left, right := itp.evaluate(exp.Left), itp.evaluate(exp.Right)
 
