@@ -103,6 +103,22 @@ func (itp *Interpreter) VisitorLiteralExpr(exp *expr.Literal) interface{} {
 	return exp.Value
 }
 
+func (itp *Interpreter) VisitorLogicalExpr(expr *expr.Logical) interface{} {
+	left := itp.evaluate(expr.Left)
+
+	if expr.Operator.TokenType == token.OR {
+		if itp.isTruthy(left) {
+			return left
+		}
+	} else {
+		if !itp.isTruthy(left) {
+			return left
+		}
+	}
+
+	return itp.evaluate(expr.Right)
+}
+
 func (itp *Interpreter) VisitorUnaryExpr(exp *expr.Unary) interface{} {
 	right := itp.evaluate(exp.Right)
 
@@ -125,6 +141,16 @@ func (itp *Interpreter) VisitorExpressionStmtExpr(expr *expr.Expression) interfa
 	return nil
 }
 
+func (itp *Interpreter) VisitorIFStmtExpr(stmt *expr.IF) interface{} {
+	if itp.isTruthy(itp.evaluate(stmt.Condition)) {
+		itp.execute(stmt.ThenBranch)
+	} else if stmt.ElseBranch != nil {
+		itp.execute(stmt.ElseBranch)
+	}
+
+	return nil
+}
+
 func (itp *Interpreter) VisitorPrintStmtExpr(expr *expr.Print) interface{} {
 	value := itp.evaluate(expr.Print)
 	fmt.Printf("%s\n", itp.stringify(value))
@@ -139,6 +165,14 @@ func (itp *Interpreter) VisitorVarStmtExpr(expr *expr.Var) interface{} {
 	}
 
 	itp.env.Define(expr.Name.Lexeme, value)
+	return nil
+}
+
+func (itp *Interpreter) VisitorWhileStmtExpr(stmt *expr.While) interface{} {
+	for itp.isTruthy(itp.evaluate(stmt.Condition)) {
+		itp.execute(stmt.Body)
+	}
+
 	return nil
 }
 

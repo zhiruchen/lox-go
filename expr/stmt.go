@@ -1,11 +1,14 @@
 package expr
 
-import "github.com/zhiruchen/lox-go/token"
+import (
+	"github.com/zhiruchen/lox-go/token"
+)
 
 type StmtVisitor interface {
 	VisitorExpressionStmtExpr(expr *Expression) interface{}
 	VisitorPrintStmtExpr(expr *Print) interface{}
 	VisitorVarStmtExpr(expr *Var) interface{}
+	VisitorWhileStmtExpr(expr *While) interface{}
 	VisitorBlockStmtExpr(expr *Block) interface{}
 	VisitorIFStmtExpr(expr *IF) interface{}
 }
@@ -33,6 +36,11 @@ type Var struct {
 	Initializer Expr
 }
 
+type While struct {
+	Condition Expr
+	Body      Stmt
+}
+
 type Block struct {
 	Statements []Stmt
 }
@@ -53,6 +61,10 @@ func (st *Var) Accept(v Visitor) interface{} {
 	return v.VisitorVarStmtExpr(st)
 }
 
+func (st *While) Accept(v Visitor) interface{} {
+	return v.VisitorWhileStmtExpr(st)
+}
+
 func (st *Block) Accept(v Visitor) interface{} {
 	return v.VisitorBlockStmtExpr(st)
 }
@@ -71,6 +83,10 @@ func NewIFStmt(cond Expr, thenBranch, elseBranch Stmt) *IF {
 
 func NewVarStmt(name *token.Token, e Expr) *Var {
 	return &Var{Name: name, Initializer: e}
+}
+
+func NewWhileStmt(cond Expr, body Stmt) *While {
+	return &While{Condition: cond, Body: body}
 }
 
 func NewBlockStmt(stmts []Stmt) *Block {

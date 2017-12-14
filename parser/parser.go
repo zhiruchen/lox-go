@@ -48,6 +48,10 @@ func (p *Parser) varDeclaration() expr.Stmt {
 }
 
 func (p *Parser) statement() expr.Stmt {
+	if p.match(token.For) {
+		return p.forStatement()
+	}
+
 	if p.match(token.If) {
 		return p.ifStatement()
 	}
@@ -56,11 +60,57 @@ func (p *Parser) statement() expr.Stmt {
 		return p.printStatement()
 	}
 
+	if p.match(token.While) {
+		return p.whileStatement()
+	}
+
 	if p.match(token.LeftBrace) {
 		return expr.NewBlockStmt(p.block())
 	}
 
 	return p.expressionStatement()
+}
+
+func (p *Parser) forStatement() expr.Stmt {
+	p.consume(token.LeftParen, "Expect `(` after for.")
+
+	var initializer expr.Stmt
+
+	if p.match(token.Semicolon) {
+		initializer = nil
+	} else if p.match(token.Var) {
+		initializer = p.varDeclaration()
+	} else {
+		initializer = p.expressionStatement()
+	}
+
+	var cond expr.Expr
+	if !p.check(token.Semicolon) {
+		cond = p.expression()
+	}
+	p.consume(token.Semicolon, "Expect `;` after loop condition.")
+
+	var increment expr.Expr
+	if !p.check(token.RightParen) {
+		increment = p.expression()
+	}
+	p.consume(token.RightParen, "Expect `)` after for clauses.")
+	body := p.statement()
+
+	if increment != nil {
+		body = expr.NewBlockStmt([]expr.Stmt{body, expr.NewExpressionStmt(increment)})
+	}
+
+	if cond == nil {
+		cond = expr.NewLiteral(true)
+	}
+	body = expr.NewWhileStmt(cond, body)
+
+	if initializer != nil {
+		body = expr.NewBlockStmt([]expr.Stmt{initializer, body})
+	}
+
+	return body
 }
 
 func (p *Parser) ifStatement() expr.Stmt {
@@ -81,6 +131,16 @@ func (p *Parser) printStatement() *expr.Print {
 	value := p.expression()
 	p.consume(token.Semicolon, `Expect ":" after value.`)
 	return expr.NewPrintStmt(value)
+}
+
+func (p *Parser) whileStatement() expr.Stmt {
+	p.consume(token.LeftParen, `expect "(" after 'while'.`)
+	cond := p.expression()
+	p.consume(token.RightParen, `expect ")" after condition.`)
+
+	body := p.statement()
+
+	return expr.NewWhileStmt(cond, body)
 }
 
 func (p *Parser) expressionStatement() *expr.Expression {
@@ -106,7 +166,8 @@ func (p *Parser) expression() expr.Expr {
 }
 
 func (p *Parser) assignment() expr.Expr {
-	exp := p.equality()
+	exp := p.or()
+	//exp := p.equality()
 
 	if p.match(token.Equal) {
 		equals := p.previous()
@@ -122,6 +183,33 @@ func (p *Parser) assignment() expr.Expr {
 
 	return exp
 }
+
+func (p *Parser) or() expr.Expr {
+	exp := p.and()
+
+	for p.match(token.OR) {
+		op := p.previous()
+		right := p.and()
+
+		exp = expr.NewLogical(exp, right, op)
+	}
+
+	return exp
+}
+
+func (p *Parser) and() expr.Expr {
+	exp := p.equality()
+
+	for p.match(token.And) {
+		op := p.previous()
+		right := p.equality()
+
+		exp = expr.NewLogical(exp, right, op)
+	}
+
+	return exp
+}
+
 
 func (p *Parser) equality() expr.Expr {
 	exp := p.comparison()
