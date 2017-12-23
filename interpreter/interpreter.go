@@ -14,14 +14,14 @@ import (
 // Interpreter the lox lang interpreter
 type Interpreter struct {
 	env     *lox.Env
-	globals *lox.Env
+	Globals *lox.Env
 }
 
 func NewInterpreter() *Interpreter {
 	globals := lox.NewEnv()
 	globals.Define("lock", &builtin.Lock{})
 
-	return &Interpreter{env: globals, globals: globals}
+	return &Interpreter{env: globals, Globals: globals}
 }
 
 // Interpret 运行解释器
@@ -38,11 +38,11 @@ func (itp *Interpreter) execute(stmt expr.Stmt) {
 }
 
 func (itp *Interpreter) VisitorBlockStmtExpr(expr *expr.Block) interface{} {
-	itp.executeBlock(expr.Statements, lox.NewEnvWithEnclosing(itp.env))
+	itp.ExecuteBlock(expr.Statements, lox.NewEnvWithEnclosing(itp.env))
 	return nil
 }
 
-func (itp *Interpreter) executeBlock(statements []expr.Stmt, env *lox.Env) {
+func (itp *Interpreter) ExecuteBlock(statements []expr.Stmt, env *lox.Env) {
 	previous := itp.env
 	defer func() {
 		itp.env = previous
@@ -163,6 +163,12 @@ func (itp *Interpreter) VisitorVariableExpr(exp *expr.Variable) interface{} {
 
 func (itp *Interpreter) VisitorExpressionStmtExpr(expr *expr.Expression) interface{} {
 	itp.evaluate(expr.Expression)
+	return nil
+}
+
+func (itp *Interpreter) VisitorFunStmtExpr(stmt *expr.Function) interface{} {
+	function := lox.NewFunction(stmt)
+	itp.env.Define(stmt.Name.Lexeme, function)
 	return nil
 }
 
