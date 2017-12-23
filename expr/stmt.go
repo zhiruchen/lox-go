@@ -11,6 +11,7 @@ type StmtVisitor interface {
 	VisitorWhileStmtExpr(expr *While) interface{}
 	VisitorBlockStmtExpr(expr *Block) interface{}
 	VisitorIFStmtExpr(expr *IF) interface{}
+	VisitorFunStmtExpr(expr *Function) interface{}
 }
 
 type Stmt interface {
@@ -19,6 +20,12 @@ type Stmt interface {
 
 type Expression struct {
 	Expression Expr
+}
+
+type Function struct {
+	Name       *token.Token
+	Parameters []*token.Token
+	Body       []Stmt
 }
 
 type IF struct {
@@ -47,6 +54,10 @@ type Block struct {
 
 func (st *Expression) Accept(v Visitor) interface{} {
 	return v.VisitorExpressionStmtExpr(st)
+}
+
+func (st *Function) Accept(v Visitor) interface{} {
+	return v.VisitorFunStmtExpr(st)
 }
 
 func (st *IF) Accept(v Visitor) interface{} {
@@ -79,6 +90,10 @@ func NewExpressionStmt(e Expr) *Expression {
 
 func NewIFStmt(cond Expr, thenBranch, elseBranch Stmt) *IF {
 	return &IF{Condition: cond, ThenBranch: thenBranch, ElseBranch: elseBranch}
+}
+
+func NewFunctionStmt(name *token.Token, params []*token.Token, body []Stmt) *Function {
+	return &Function{Name:name, Parameters:params, Body:body}
 }
 
 func NewVarStmt(name *token.Token, e Expr) *Var {

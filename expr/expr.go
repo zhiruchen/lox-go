@@ -12,6 +12,7 @@ type Visitor interface {
 	VisitorUnaryExpr(expr *Unary) interface{}
 	VisitorVariableExpr(expr *Variable) interface{}
 	VisitorAssignExpr(expr *Assign) interface{}
+	VisitorCallExpr(expr *Call) interface{}
 
 	StmtVisitor
 }
@@ -45,6 +46,24 @@ func NewBinary(left, right Expr, operator *token.Token) *Binary {
 
 func (bin *Binary) Accept(v Visitor) interface{} {
 	return v.VisitorBinaryExpr(bin)
+}
+
+type Call struct {
+	Callee    Expr
+	Paren     *token.Token
+	Arguments []Expr
+}
+
+func NewCall(callee Expr, paren *token.Token, arguments []Expr) *Call {
+	return &Call{
+		Callee:    callee,
+		Paren:     paren,
+		Arguments: arguments,
+	}
+}
+
+func (cl *Call) Accept(v Visitor) interface{} {
+	return v.VisitorCallExpr(cl)
 }
 
 type Grouping struct {

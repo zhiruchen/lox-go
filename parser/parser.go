@@ -8,13 +8,16 @@ import (
 	"github.com/zhiruchen/lox-go/token"
 )
 
+type ErrFunc func(tk *token.Token, msg string)
+
 type Parser struct {
 	tokens  []*token.Token
 	current int
+	errFunc ErrFunc
 }
 
-func NewParser(tokens []*token.Token) *Parser {
-	return &Parser{tokens: tokens}
+func NewParser(tokens []*token.Token, errFunc ErrFunc) *Parser {
+	return &Parser{tokens: tokens, errFunc: errFunc}
 }
 
 func (p *Parser) Parse() []expr.Stmt {
@@ -32,6 +35,10 @@ func (p *Parser) declaration() expr.Stmt {
 		return p.varDeclaration()
 	}
 
+	if p.match(token.Fun) {
+		return p.function("function")
+	}
+
 	return p.statement()
 }
 
@@ -46,6 +53,30 @@ func (p *Parser) varDeclaration() expr.Stmt {
 	p.consume(token.Semicolon, `Expect ';' after variable declaration.`)
 	return expr.NewVarStmt(name, initializer)
 }
+
+func (p *Parser) function(kind string) *expr.Function {
+	name := p.consume(token.Identifier, "expect " +kind+ "name.")
+	p.consume(token.LeftParen, "Expect `(` after "+kind+" name.")
+
+	var params []*token.Token
+	if !p.check(token.RightParen) {
+		params = append(params, p.consume(token.Identifier, "Expect parameter name."))
+
+		for p.match(token.Comma) {
+			if len(params) > 8 {
+				p.errFunc(p.peek(), "Cannot have more than 8 parameters.")
+			}
+
+			params = append(params, p.consume(token.Identifier, "Expect parameter name."))
+		}
+	}
+	p.consume(token.RightParen, "Expect `)` after parameters")
+
+	p.consume(token.LeftBrace, "Expect `{` before "+kind+ " body.")
+	body := p.block()
+	return expr.NewFunctionStmt(name, params, body)
+}
+
 
 func (p *Parser) statement() expr.Stmt {
 	if p.match(token.For) {
@@ -210,7 +241,6 @@ func (p *Parser) and() expr.Expr {
 	return exp
 }
 
-
 func (p *Parser) equality() expr.Expr {
 	exp := p.comparison()
 
@@ -264,7 +294,40 @@ func (p *Parser) unary() expr.Expr {
 		return expr.NewUnary(op, right)
 	}
 
-	return p.primary()
+	return p.call()
+}
+
+func (p *Parser) call() expr.Expr {
+	exp := p.primary()
+
+	for {
+		if p.match(token.LeftParen) {
+			exp = p.finishCall(exp)
+		} else {
+			break
+		}
+	}
+
+	return exp
+}
+
+func (p *Parser) finishCall(callee expr.Expr) expr.Expr {
+	var arguments []expr.Expr
+
+	if !p.check(token.RightParen) {
+		if len(arguments) > 8 {
+			p.errFunc(p.peek(), "Cannot have more than 8 arguments")
+		}
+
+		arguments = append(arguments, p.expression())
+
+		for p.match(token.Comma) {
+			arguments = append(arguments, p.expression())
+		}
+	}
+
+	paren := p.consume(token.RightParen, "Expect `)` after arguments!")
+	return expr.NewCall(callee, paren, arguments)
 }
 
 func (p *Parser) primary() expr.Expr {

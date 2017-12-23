@@ -7,16 +7,21 @@ import (
 
 	"github.com/zhiruchen/lox-go/expr"
 	"github.com/zhiruchen/lox-go/lox"
+	"github.com/zhiruchen/lox-go/lox/builtin"
 	"github.com/zhiruchen/lox-go/token"
 )
 
 // Interpreter the lox lang interpreter
 type Interpreter struct {
-	env *lox.Env
+	env     *lox.Env
+	globals *lox.Env
 }
 
 func NewInterpreter() *Interpreter {
-	return &Interpreter{env: lox.NewEnv()}
+	globals := lox.NewEnv()
+	globals.Define("lock", &builtin.Lock{})
+
+	return &Interpreter{env: globals, globals: globals}
 }
 
 // Interpret 运行解释器
@@ -93,6 +98,26 @@ func (itp *Interpreter) VisitorBinaryExpr(exp *expr.Binary) interface{} {
 	default:
 		return nil
 	}
+}
+
+func (itp *Interpreter) VisitorCallExpr(expr *expr.Call) interface{} {
+	callee := itp.evaluate(expr.Callee)
+
+	var arguments []interface{}
+	for _, arg := range expr.Arguments {
+		arguments = append(arguments, itp.evaluate(arg))
+	}
+
+	function, ok := callee.(lox.Callable)
+	if !ok {
+		panic(lox.NewRuntimeError(expr.Paren, "Can only call functions and classes"))
+	}
+
+	if len(arguments) != function.Arity() {
+		panic(lox.RuntimeError{expr.Paren, fmt.Sprintf("Expected %d arguments but got %d", function.Arity(), len(arguments))})
+	}
+
+	return function.Call(itp, arguments)
 }
 
 func (itp *Interpreter) VisitorGroupingExpr(exp *expr.Grouping) interface{} {
