@@ -55,7 +55,7 @@ func (p *Parser) varDeclaration() expr.Stmt {
 }
 
 func (p *Parser) function(kind string) *expr.Function {
-	name := p.consume(token.Identifier, "expect " +kind+ "name.")
+	name := p.consume(token.Identifier, "expect "+kind+"name.")
 	p.consume(token.LeftParen, "Expect `(` after "+kind+" name.")
 
 	var params []*token.Token
@@ -72,11 +72,10 @@ func (p *Parser) function(kind string) *expr.Function {
 	}
 	p.consume(token.RightParen, "Expect `)` after parameters")
 
-	p.consume(token.LeftBrace, "Expect `{` before "+kind+ " body.")
+	p.consume(token.LeftBrace, "Expect `{` before "+kind+" body.")
 	body := p.block()
 	return expr.NewFunctionStmt(name, params, body)
 }
-
 
 func (p *Parser) statement() expr.Stmt {
 	if p.match(token.For) {
@@ -89,6 +88,10 @@ func (p *Parser) statement() expr.Stmt {
 
 	if p.match(token.Print) {
 		return p.printStatement()
+	}
+
+	if p.match(token.Return) {
+		return p.returnStatement()
 	}
 
 	if p.match(token.While) {
@@ -162,6 +165,18 @@ func (p *Parser) printStatement() *expr.Print {
 	value := p.expression()
 	p.consume(token.Semicolon, `Expect ":" after value.`)
 	return expr.NewPrintStmt(value)
+}
+
+func (p *Parser) returnStatement() *expr.Return {
+	keyword := p.previous()
+	var value expr.Expr
+
+	if !p.check(token.Semicolon) {
+		value = p.expression()
+	}
+	p.consume(token.Semicolon, "Expect `;` after return value.")
+
+	return expr.NewReturnStmt(keyword, value)
 }
 
 func (p *Parser) whileStatement() expr.Stmt {

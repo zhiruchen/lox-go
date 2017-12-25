@@ -5,10 +5,10 @@ import (
 )
 
 type RuntimeError struct {
-	Tk *token.Token
+	Tk  *token.Token
 	Msg string
 }
 
 func NewRuntimeError(tk *token.Token, msg string) *RuntimeError {
-	return &RuntimeError{Tk:tk, Msg:msg}
+	return &RuntimeError{Tk: tk, Msg: msg}
 }

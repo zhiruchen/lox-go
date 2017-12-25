@@ -1,24 +1,23 @@
-package lox
+package interpreter
 
 import (
 	"github.com/zhiruchen/lox-go/expr"
-	itp "github.com/zhiruchen/lox-go/interpreter"
 )
 
 type Function struct {
 	declaration *expr.Function
 }
 
-func NewFunction (declaration *expr.Function) *Function {
-	return &Function{declaration:declaration}
+func NewFunction(declaration *expr.Function) *Function {
+	return &Function{declaration: declaration}
 }
 
 func (f *Function) Arity() int {
 	return len(f.declaration.Parameters)
 }
 
-func (f *Function) Call(itp *itp.Interpreter, args []interface{}) interface{} {
-	env := NewEnvWithEnclosing(itp.Globals)
+func (f *Function) Call(itp *Interpreter, args []interface{}) interface{} {
+	env := NewEnvWithEnclosing(itp.GetGlobalEnv())
 
 	for i, param := range f.declaration.Parameters {
 		env.Define(param.Lexeme, args[i])
@@ -29,5 +28,5 @@ func (f *Function) Call(itp *itp.Interpreter, args []interface{}) interface{} {
 }
 
 func (f *Function) String() string {
-	return "<fn " + f.declaration.Name.Lexeme +">"
+	return "<fn " + f.declaration.Name.Lexeme + ">"
 }

@@ -7,21 +7,20 @@ import (
 
 	"github.com/zhiruchen/lox-go/expr"
 	"github.com/zhiruchen/lox-go/lox"
-	"github.com/zhiruchen/lox-go/lox/builtin"
 	"github.com/zhiruchen/lox-go/token"
 )
 
 // Interpreter the lox lang interpreter
 type Interpreter struct {
-	env     *lox.Env
-	Globals *lox.Env
+	env     *Env
+	globals *Env
 }
 
 func NewInterpreter() *Interpreter {
-	globals := lox.NewEnv()
-	globals.Define("lock", &builtin.Lock{})
+	globals := NewEnv()
+	globals.Define("clock", &CLock{})
 
-	return &Interpreter{env: globals, Globals: globals}
+	return &Interpreter{env: globals, globals: globals}
 }
 
 // Interpret 运行解释器
@@ -33,16 +32,24 @@ func (itp *Interpreter) Interpret(statements []expr.Stmt) {
 	}
 }
 
+func (itp *Interpreter) GetGlobalEnv() *Env {
+	return itp.globals
+}
+
 func (itp *Interpreter) execute(stmt expr.Stmt) {
 	stmt.Accept(itp)
 }
 
 func (itp *Interpreter) VisitorBlockStmtExpr(expr *expr.Block) interface{} {
-	itp.ExecuteBlock(expr.Statements, lox.NewEnvWithEnclosing(itp.env))
+	itp.executeBlock(expr.Statements, NewEnvWithEnclosing(itp.env))
 	return nil
 }
 
-func (itp *Interpreter) ExecuteBlock(statements []expr.Stmt, env *lox.Env) {
+func (itp *Interpreter) ExecuteBlock(statements []expr.Stmt, env *Env) {
+	itp.executeBlock(statements, env)
+}
+
+func (itp *Interpreter) executeBlock(statements []expr.Stmt, env *Env) {
 	previous := itp.env
 	defer func() {
 		itp.env = previous
@@ -108,7 +115,7 @@ func (itp *Interpreter) VisitorCallExpr(expr *expr.Call) interface{} {
 		arguments = append(arguments, itp.evaluate(arg))
 	}
 
-	function, ok := callee.(lox.Callable)
+	function, ok := callee.(Callable)
 	if !ok {
 		panic(lox.NewRuntimeError(expr.Paren, "Can only call functions and classes"))
 	}
@@ -167,7 +174,7 @@ func (itp *Interpreter) VisitorExpressionStmtExpr(expr *expr.Expression) interfa
 }
 
 func (itp *Interpreter) VisitorFunStmtExpr(stmt *expr.Function) interface{} {
-	function := lox.NewFunction(stmt)
+	function := NewFunction(stmt)
 	itp.env.Define(stmt.Name.Lexeme, function)
 	return nil
 }

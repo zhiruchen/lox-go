@@ -7,6 +7,7 @@ import (
 type StmtVisitor interface {
 	VisitorExpressionStmtExpr(expr *Expression) interface{}
 	VisitorPrintStmtExpr(expr *Print) interface{}
+	VisitorReturnStmtExpr(expr *Return) interface{}
 	VisitorVarStmtExpr(expr *Var) interface{}
 	VisitorWhileStmtExpr(expr *While) interface{}
 	VisitorBlockStmtExpr(expr *Block) interface{}
@@ -36,6 +37,11 @@ type IF struct {
 
 type Print struct {
 	Print Expr
+}
+
+type Return struct {
+	Keyword *token.Token
+	Value   Expr
 }
 
 type Var struct {
@@ -68,6 +74,10 @@ func (st *Print) Accept(v Visitor) interface{} {
 	return v.VisitorPrintStmtExpr(st)
 }
 
+func (st *Return) Accept(v Visitor) interface{} {
+	return v.VisitorReturnStmtExpr(st)
+}
+
 func (st *Var) Accept(v Visitor) interface{} {
 	return v.VisitorVarStmtExpr(st)
 }
@@ -84,6 +94,10 @@ func NewPrintStmt(e Expr) *Print {
 	return &Print{Print: e}
 }
 
+func NewReturnStmt(keyword *token.Token, value Expr) *Return {
+	return &Return{Keyword: keyword, Value: value}
+}
+
 func NewExpressionStmt(e Expr) *Expression {
 	return &Expression{Expression: e}
 }
@@ -93,7 +107,7 @@ func NewIFStmt(cond Expr, thenBranch, elseBranch Stmt) *IF {
 }
 
 func NewFunctionStmt(name *token.Token, params []*token.Token, body []Stmt) *Function {
-	return &Function{Name:name, Parameters:params, Body:body}
+	return &Function{Name: name, Parameters: params, Body: body}
 }
 
 func NewVarStmt(name *token.Token, e Expr) *Var {

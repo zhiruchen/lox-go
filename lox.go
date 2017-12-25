@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/zhiruchen/lox-go/interpreter"
+	"github.com/zhiruchen/lox-go/lox"
 	"github.com/zhiruchen/lox-go/parser"
 	"github.com/zhiruchen/lox-go/scanner"
 )
@@ -30,7 +31,7 @@ func runPrompt() {
 func run(itp *interpreter.Interpreter, source string) {
 	s := scanner.NewScanner(source)
 	tokens := s.ScanTokens()
-	p := parser.NewParser(tokens)
+	p := parser.NewParser(tokens, lox.TokenError)
 	itp.Interpret(p.Parse())
 }
 

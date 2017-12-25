@@ -1,4 +1,4 @@
-package lox
+package interpreter
 
 import (
 	"github.com/zhiruchen/lox-go/token"
